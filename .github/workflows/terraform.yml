@@ -86,10 +86,12 @@ jobs:
       with:
         terraform_version: 1.2.5
         terraform_wrapper: false
+   
     - name: Terraform Apply
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      run: terraform apply -auto-approve -input=false
-
+      run: terraform apply -auto-approve -input=true
+      with:
+        auto_approve: false
 
 
 
