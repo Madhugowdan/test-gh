@@ -41,23 +41,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Approval
+    - name: Wait for manual approval
       id: approval
-      uses: trstringer/manual-approval@v1
+      uses: andrewbranch/wait-for-manual-approve-action@v1
       with:
         message: "Please review and approve Terraform plan"
 
     - name: Apply Terraform
-      if: steps.approval.outputs.approve == 'yes'
-      uses:  hashicorp/setup-terraform@v2
+      if: steps.approval.outputs.approved == 'true'
+      uses: hashicorp/terraform-github-actions@v2
       with:
         terraform-version: 0.15.4
         command: apply
-        working-directory: .
+        working-directory: terraform
         args: -input=false -auto-approve
-
-
-
 
 
 
