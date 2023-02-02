@@ -43,13 +43,13 @@ jobs:
     steps:
     - name: Approval
       id: approval
-      uses: actions/manual-approval@v1
+      uses: trstringer/manual-approval@v1
       with:
         message: "Please review and approve Terraform plan"
 
     - name: Apply Terraform
       if: steps.approval.outputs.approve == 'yes'
-      uses: hashicorp/terraform-github-actions@v2
+      uses:  hashicorp/setup-terraform@v2
       with:
         terraform-version: 0.15.4
         command: apply
