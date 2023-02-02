@@ -35,6 +35,43 @@ jobs:
       id: validate
       run: terraform validate -no-color
 
+    - name: Terraform plan
+      id: plan
+      if: github.event_name == 'pull_request' || github.event_name == 'push'
+      run: terraform plan -no-color -input=false
+      continue-on-error: true
+
+    - name: Terraform Plan Status
+      if: steps.plan.outcome == 'failure'
+      run: exit 1
+    
+    - uses: actions/github-script@v6
+      if: github.event_name == 'pull_request'
+      env:
+        PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+      with:
+        script: |
+           const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+           #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+           #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+           #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+ 
+           <details><summary>Show Plan</summary>
+ 
+           \`\`\`\n
+           ${process.env.PLAN}
+           \`\`\`
+ 
+           </details>
+           *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+ 
+           github.rest.issues.createComment({
+             issue_number: context.issue.number,
+             owner: context.repo.owner,
+             repo: context.repo.repo,
+             body: output
+           })
+
   terraform_apply:
     name: Terraform Apply
     needs: [terraform_plan]
@@ -49,24 +86,31 @@ jobs:
       with:
         terraform_version: 1.2.5
         terraform_wrapper: false
+    - name: Terraform Apply
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      run: terraform apply -auto-approve -input=false
 
-    - name: Apply Terraform
-      uses: hashicorp/terraform-github-actions@v1
-      with:
-        args: plan
-        auto-approve: false
 
-    - name: Request review and approval
-      uses: python-actions/review-and-approve-action@v1
-      with:
-        message: "Please review and approve Terraform plan"
 
-    - name: Deploy changes
-      if: github.event.pull_request.review.approved
-      uses: hashicorp/terraform-github-actions@v1
-      with:
-        args: apply
-        auto-approve: true
+
+
+    # - name: Apply Terraform
+    #   uses: hashicorp/terraform-github-actions@v1
+    #   with:
+    #     args: plan
+    #     auto-approve: false
+
+    # - name: Request review and approval
+    #   uses: python-actions/review-and-approve-action@v1
+    #   with:
+    #     message: "Please review and approve Terraform plan"
+
+    # - name: Deploy changes
+    #   if: github.event.pull_request.review.approved
+    #   uses: hashicorp/terraform-github-actions@v1
+    #   with:
+    #     args: apply
+    #     auto-approve: true
 
 
 
