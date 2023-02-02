@@ -99,6 +99,7 @@ jobs:
    
     - name: Terraform Apply
      # if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      id: apply
       run: terraform apply  -input=true
 
 
