@@ -72,12 +72,17 @@ jobs:
 
     - name: Manual approval
       id: manual-approval
-      uses: actions/bin/filter@v1
+      uses: actions/request-approval@v2
       with:
-        args: approve
+        reviewers: Madhugowdan
+
+    # - name: Deploy
+    #   if: steps.manual-approval.outputs.approval_granted == 'true'
+    #   run: |
+    #     echo "Deploying code..."
 
     - name: Terraform Apply
-      if: github.ref == 'refs/heads/"main"' && github.event_name == 'push' && steps.manual-approval.outputs.approved == 'true'
+      if: github.ref == 'refs/heads/"main"' && github.event_name == 'push' && steps.manual-approval.outputs.approval_granted == 'true'
       run: terraform apply -auto-approve -input=false
 
 
