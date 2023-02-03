@@ -37,43 +37,16 @@ jobs:
 
     - name: Terraform plan
       id: plan
-     # if: github.event_name == 'pull_request' || github.event_name == 'push'
+      if: github.event_name == 'pull_request' #|| github.event_name == 'push'
       run: terraform plan -no-color -input=false
       continue-on-error: true
 
     - name: Terraform Plan Status
       if: steps.plan.outcome == 'failure'
       run: exit 1
-    
-    - uses: actions/github-script@v6
-      if: github.event_name == 'pull_request'
-      env:
-        PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
-      with:
-        script: |
-           const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
-           #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
-           #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
-           #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
- 
-           <details><summary>Show Plan</summary>
- 
-           \`\`\`\n
-           ${process.env.PLAN}
-           \`\`\`
- 
-           </details>
-           *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
- 
-           github.rest.issues.createComment({
-             issue_number: context.issue.number,
-             owner: context.repo.owner,
-             repo: context.repo.repo,
-             body: output
-           })
+  
 
   terraform_apply:
-  
     name: Terraform Apply
     needs: [terraform_plan]
     runs-on: ubuntu-latest
@@ -96,14 +69,47 @@ jobs:
     - name: Terraform Init
       id: init
       run: terraform init
-   
+    - name: Manual approval
+      id: manual-approval
+      uses: actions/bin/filter@v1
+      with:
+        args: manual-approve
+        inputs:
+          workflow_dispatch: ${{ github.event.inputs }}
+
     - name: Terraform Apply
-     # if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      id: apply
-      run: terraform apply  -input=true
+      if: github.ref == 'refs/heads/"main"' && github.event_name == 'push' && steps.manual-approval.outputs.approval_granted == 'true'
+      run: terraform apply -auto-approve -input=false
 
 
+#############
 
+    # - uses: actions/github-script@v6
+    #   if: github.event_name == 'pull_request'
+    #   env:
+    #     PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+    #   with:
+    #     script: |
+    #        const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+    #        #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+    #        #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+    #        #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+ 
+    #        <details><summary>Show Plan</summary>
+ 
+    #        \`\`\`\n
+    #        ${process.env.PLAN}
+    #        \`\`\`
+ 
+    #        </details>
+    #        *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+ 
+    #        github.rest.issues.createComment({
+    #          issue_number: context.issue.number,
+    #          owner: context.repo.owner,
+    #          repo: context.repo.repo,
+    #          body: output
+    #        })
 
     # - name: Apply Terraform
     #   uses: hashicorp/terraform-github-actions@v1
