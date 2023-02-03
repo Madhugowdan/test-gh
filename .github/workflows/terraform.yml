@@ -72,7 +72,9 @@ jobs:
 
     - name: Manual approval
       id: manual-approval
-      uses: actions/approve@v2
+      uses: actions/bin/filter@v1
+      with:
+        args: approve
 
     - name: Terraform Apply
       if: github.ref == 'refs/heads/"main"' && github.event_name == 'push' && steps.manual-approval.outputs.approved == 'true'
