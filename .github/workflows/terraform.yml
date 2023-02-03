@@ -73,8 +73,8 @@ jobs:
     - name: Manual approval
       id: manual-approval
       uses: Madhugowdan/manual-approval-action@v1
-      # with:
-      #   reviewers: Madhugowdan
+      with:
+         reviewers: Madhugowdan
 
     # - name: Deploy
     #   if: steps.manual-approval.outputs.approval_granted == 'true'
