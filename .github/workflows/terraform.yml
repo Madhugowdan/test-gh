@@ -69,16 +69,13 @@ jobs:
     - name: Terraform Init
       id: init
       run: terraform init
+
     - name: Manual approval
       id: manual-approval
-      uses: actions/bin/filter@v1
-      with:
-        args: manual-approve
-        inputs:
-          workflow_dispatch: ${{ github.event.inputs }}
+      uses: actions/approve@v2
 
     - name: Terraform Apply
-      if: github.ref == 'refs/heads/"main"' && github.event_name == 'push' && steps.manual-approval.outputs.approval_granted == 'true'
+      if: github.ref == 'refs/heads/"main"' && github.event_name == 'push' && steps.manual-approval.outputs.approved == 'true'
       run: terraform apply -auto-approve -input=false
 
 
